@@ -1,0 +1,23 @@
+module pwm(
+    input clk_50MHz,
+    //input [3:0] pulse_width,
+    output reg clk_1Hz, pwm_signal
+);
+
+initial begin
+    clk_1Hz = 1; pwm_signal = 1;
+end
+reg [3:0]pulse_width=1;
+reg [21:0]duty_cycle = 0;
+reg [25:0]counter = 0;
+always@(posedge clk_50MHz)
+begin 
+	  duty_cycle = (pulse_width*2500000);
+	  if(counter< 25000000) clk_1Hz = 1'b1;
+	  else clk_1Hz = 1'b0;
+	  if(counter == 49999999) counter <= 0;
+	  else counter <= counter +1;
+	  if (counter<duty_cycle) pwm_signal = 1'b1;
+     else pwm_signal = 1'b0;
+end
+endmodule
