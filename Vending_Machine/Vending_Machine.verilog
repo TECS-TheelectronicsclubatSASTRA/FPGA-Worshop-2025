@@ -1,0 +1,164 @@
+module vending_machine(clk, rst, amt, m1, m2, m3, m4, cho, de);
+    input         clk, rst;
+    input         de;
+    input  [1:0]  amt, cho;
+    output reg [6:0] m1, m2, m3, m4;
+
+    parameter ideal = 4'd0,
+              r5    = 4'd1,
+              r10   = 4'd2,
+              r15   = 4'd3,
+              r20   = 4'd4,
+              r25   = 4'd5,
+              r30   = 4'd6,
+              r35   = 4'd7,
+              r40   = 4'd8;
+
+    reg [3:0] state;
+
+    always @(posedge clk or negedge rst) begin
+        if (!rst) begin
+            state <= ideal;
+            m1    <= 7'b1111111;
+            m2    <= 7'b1111111;
+            m3    <= 7'b1111111;
+            m4    <= 7'b1111111;
+        end 
+        else if (de == 1) begin
+            // Global deactivation: reset to ideal state
+            state <= ideal;
+            m1    <= 7'b1111111;
+            m2    <= 7'b1111111;
+            m3    <= 7'b1111111;
+            m4    <= 7'b1111111;
+        end 
+        else begin
+            case (state)
+                ideal: begin
+                    m1 <= 7'b1111111;
+                    m2 <= 7'b1111111;
+                    m3 <= 7'b1111111;
+                    m4 <= 7'b1111111;
+                    if (amt == 2'b00)
+                        state <= r5;
+                    else if (amt == 2'b01)
+                        state <= r10;
+                    else if (amt == 2'b10)
+                        state <= r20;
+                    else
+                        state <= ideal;
+                end
+
+                r5: begin
+                    if (amt == 2'b00)
+                        state <= r10;
+                    else if (amt == 2'b01)
+                        state <= r15;
+                    else if (amt == 2'b10)
+                        state <= r25;
+                    else
+                        state <= r5; // Hold state if no valid amt
+                end
+
+                r10: begin
+                    if (amt == 2'b00)
+                        state <= r15;
+                    else if (amt == 2'b01)
+                        state <= r20;
+                    else if (amt == 2'b10)
+                        state <= r30;
+                    else
+                        state <= r10;
+                end
+
+                r15: begin
+                    if (amt == 2'b00)
+                        state <= r20;
+                    else if (amt == 2'b01)
+                        state <= r25;
+                    else if (amt == 2'b10)
+                        state <= r35;
+                    else
+                        state <= r15;
+                end
+
+                r20: begin
+                    if (cho == 2'b00) begin
+                        m1 <= 7'b0001000;
+                        m2 <= 7'b1000000;
+                        m3 <= 7'b0010010;
+                        m4 <= 7'b0000110;
+                        state <= r20; // Remain until a new amt input occurs
+                    end 
+                    else begin
+                        if (amt == 2'b00)
+                            state <= r25;
+                        else if (amt == 2'b01)
+                            state <= r30;
+                        else if (amt == 2'b10)
+                            state <= r40;
+                        else
+                            state <= r20;
+                    end
+                end
+
+                r25: begin
+                    if (amt == 2'b00)
+                        state <= r30;
+                    else if (amt == 2'b01)
+                        state <= r35;
+                    else
+                        state <= r25;
+                end
+
+                r30: begin
+                    if (cho == 2'b01) begin
+                        m1 <= 7'b1001111;
+                        m2 <= 7'b1000110;
+                        m3 <= 7'b0000100;
+                        m4 <= 7'b1111111;
+                        state <= r30;
+                    end 
+                    else begin
+                        if (amt == 2'b00)
+                            state <= r35;
+                        else if (amt == 2'b01)
+                            state <= r40;
+                        else
+                            state <= r30;
+                    end
+                end
+
+                r35: begin
+                    if (cho == 2'b10) begin
+                        m1 <= 7'b1000000;
+                        m2 <= 7'b0001000;
+                        m3 <= 7'b0000010;
+                        m4 <= 7'b1000000;
+                        state <= r35;
+                    end 
+                    else begin
+                        if (amt == 2'b00)
+                            state <= r40;
+                        else
+                            state <= r35;
+                    end
+                end
+
+                r40: begin
+                    if (cho == 2'b11) begin
+                        m1 <= 7'b0000111;
+                        m2 <= 7'b0000110;
+                        m3 <= 7'b0001000;
+                        m4 <= 7'b1111111;
+                        state <= r40;
+                    end 
+                    else
+                        state <= r40;
+                end
+
+                default: state <= ideal;
+            endcase
+        end
+    end
+endmodule
